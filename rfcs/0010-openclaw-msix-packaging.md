@@ -3,7 +3,7 @@ title: OpenClaw MSIX Packaging for Windows
 authors:
   - Linus Huang
 created: 2026-07-14
-last_updated: 2026-07-16
+last_updated: 2026-07-20
 status: draft
 issue:
 rfc_pr:
@@ -50,8 +50,9 @@ release checks produced a given OpenClaw MSIX artifact.
 - Create an `openclaw/openclaw-msix-packaging` repository containing the
   Windows host app, package definitions, release workflows, validation, and
   contributor documentation.
-- Produce reviewable and reproducible MSIX builds from an explicitly pinned
-  OpenClaw source revision as the only external product source input.
+- Produce reviewable and reproducible MSIX builds whose OpenClaw payload is
+  built from an explicitly pinned revision of the official
+  [`openclaw/openclaw`](https://github.com/openclaw/openclaw) repository.
 - Include a package-specific host app that provisions the dedicated agent user,
   creates the Agent Session, and manages the packaged Gateway lifecycle.
 - Publish signed MSIX artifacts under a stable OpenClaw-controlled identity,
@@ -84,10 +85,14 @@ release-ready MSIX artifacts. The repository should contain:
 - Documentation for local builds, release operations, signing, installation,
   upgrade, rollback, and uninstall behavior.
 
-The only product source input is the OpenClaw repository. The packaging
-repository must not carry a long-lived copy of OpenClaw source; each MSIX
-release instead pins the exact OpenClaw source revision it packages. Build
-toolchains and packaging dependencies are locked in the packaging repository.
+The official
+[`openclaw/openclaw`](https://github.com/openclaw/openclaw) repository is the
+source of truth for the OpenClaw payload. The packaging repository must not
+carry a long-lived copy or fork of OpenClaw source; each MSIX release instead
+pins the exact upstream revision it packages. This does not make OpenClaw the
+build's only input: host app source, bootstrapper and session-runtime
+components, toolchains, and packaging dependencies are separate inputs that
+must be pinned, verified, and recorded in the release SBOM and provenance.
 
 The host app is packaging infrastructure specific to the Windows MSIX
 deployment. It is not a fork of the OpenClaw Gateway and must keep its
@@ -104,6 +109,21 @@ GitHub Actions should provide three levels of validation:
    OpenClaw source revision and produce artifacts for manual validation.
 3. A protected release workflow signs the approved artifacts, verifies the
    resulting signatures and payloads, and publishes a GitHub Release.
+
+After the MSIX distribution path meets the release-readiness criteria in this
+RFC, the production release cadence should follow OpenClaw's release channels:
+
+- Every OpenClaw release promoted to the `stable` channel, including subsequent
+  security or reliability updates to the active stable line, should have a
+  corresponding production-signed MSIX release.
+- Beta or other prerelease OpenClaw releases may produce clearly labeled
+  prerelease MSIX artifacts for validation.
+- Moving `dev` or `main` builds may produce CI artifacts, but must not be
+  published as production MSIX releases.
+
+Packaging-only fixes may publish a new MSIX package revision while retaining
+the same embedded OpenClaw version. Release metadata must identify both the
+MSIX package version and the exact OpenClaw version it contains.
 
 The release workflow should:
 
@@ -191,23 +211,15 @@ GitHub Releases are the canonical distribution point for the first version of
 this proposal. A release should provide direct artifact links, checksums,
 signatures, provenance, release notes, and an SBOM.
 
-For enterprise deployments, the initial update flow is administrator
-controlled:
+Enterprise administrators should handle OpenClaw MSIX like any other Windows
+app distributed outside the Microsoft Store. They should use their existing
+tools and policies to review, test, approve, deploy, update, and roll back a
+specific signed release. OpenClaw does not require a separate IT deployment
+process.
 
-1. An administrator selects an exact OpenClaw MSIX release.
-2. The administrator reviews the release notes, declared package
-   capabilities, included component versions, signature, checksums, SBOM,
-   and provenance.
-3. The organization validates the package and Gateway payload in its own test
-   environment.
-4. The administrator approves and imports the exact artifact into the
-   organization's Windows application-management system.
-5. The management system stages or deploys the approved version according to
-   organization rollout and rollback policy.
-
-The installed package and host app must not bypass that process by fetching and
-installing a newer OpenClaw payload on their own. Unattended auto-update is
-disabled by default in v1.
+The installed package and host app must not bypass administrator approval by
+fetching and installing a newer OpenClaw payload on their own. Unattended
+auto-update is disabled by default in v1.
 
 For consumer installations, v1 may provide a manual update check or link to an
 explicit GitHub Release, but installation still requires a clear user action.
