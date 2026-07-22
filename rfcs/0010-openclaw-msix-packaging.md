@@ -20,8 +20,8 @@ tarball from a commit pinned for each MSIX release, validate
 architecture-specific artifacts with GitHub Actions, and publish them through
 GitHub Releases. After installation, the host app will verify and stage the
 payload, run OpenClaw onboarding, and manage the Gateway lifecycle. This
-provides stable app identity, enterprise-friendly deployment, and predictable
-installation and update behavior on Windows.
+provides a stable Package Family Name (PFN), enterprise-friendly deployment,
+and predictable installation and update behavior on Windows.
 
 ## Motivation
 
@@ -31,6 +31,9 @@ OpenClaw MSIX artifact gives the Windows installation a stable, reviewable
 package identity, declared capabilities, and a standard Windows
 application-management surface, inspectable and governed like any other
 managed application.
+
+Windows uses the PFN to associate the package with package-scoped app data and
+clean that data up on uninstall.
 
 MSIX package identity and signing do not by themselves define how the Gateway
 payload is prepared or how long-lived state survives package updates. The host
